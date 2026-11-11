@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>TimeOut — Réglages</title>
+  <style>
+    :root {
+      --bg: #0a0a0b;
+      --card: #141416;
+      --line: rgba(255, 255, 255, 0.1);
+      --text: #f2f2f4;
+      --muted: #9a9aa3;
+      --accent: #ffffff;
+      --danger: #e5484d;
+    }
+    * { box-sizing: border-box; }
+
+    body {
+      width: 348px;
+      margin: 0;
+      padding: 16px;
+      position: relative;
+      background: radial-gradient(130% 70% at 50% -25%, #1c1c20 0%, var(--bg) 62%);
+      color: var(--text);
+      font: 13px/1.5 ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    }
+    /* Grain poussiéreuse, en cohérence avec l'effet */
+    body::after {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      opacity: 0.16;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23g)' opacity='0.5'/%3E%3C/svg%3E");
+      background-size: 200px 200px;
+    }
+
+    header {
+      display: flex;
+      align-items: center;
+      gap: 11px;
+      margin-bottom: 14px;
+      position: relative;
+      z-index: 1;
+    }
+    .logo {
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      display: grid;
+      place-items: center;
+      background: linear-gradient(160deg, #2b2b30, #0d0d0f);
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.16);
+    }
+    /* Icône Papicons importée par lien (jeu en noir => inversé en blanc). */
+    .logo img {
+      width: 20px;
+      height: 20px;
+      filter: invert(1);
+    }
+    h1 { margin: 0; font-size: 16px; letter-spacing: 0.4px; }
+    .sous-titre { margin: 1px 0 0; font-size: 11px; color: var(--muted); }
+
+    .carte {
+      position: relative;
+      z-index: 1;
+      background: linear-gradient(165deg, #1a1a1d 0%, var(--card) 55%, #101012 100%);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 13px;
+      margin-bottom: 10px;
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+    }
+    .carte h2 {
+      margin: 0 0 10px;
+      font-size: 10.5px;
+      font-weight: 700;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    .champ { margin-bottom: 11px; }
+    .champ:last-child { margin-bottom: 0; }
+    .champ > label { display: block; margin-bottom: 5px; font-weight: 600; font-size: 12.5px; }
+    .aide { font-size: 11px; color: var(--muted); font-weight: 400; }
+
+    input[type="number"], input[type="text"], select {
+      width: 100%;
+      padding: 8px 10px;
+      color: var(--text);
+      background: rgba(0, 0, 0, 0.5);
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      border-radius: 8px;
+      font: inherit;
+      outline: none;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+    input:focus, select:focus {
+      border-color: rgba(255, 255, 255, 0.7);
+      box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.14);
+    }
+    /* Hide the native number spinners (ugly white arrows) */
+    input[type="number"] { -moz-appearance: textfield; appearance: textfield; }
+    input[type="number"]::-webkit-inner-spin-button,
+    input[type="number"]::-webkit-outer-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+    select {
+      appearance: none;
+      background-image: linear-gradient(45deg, transparent 50%, var(--muted) 50%),
+        linear-gradient(135deg, var(--muted) 50%, transparent 50%);
+      background-position: calc(100% - 17px) 55%, calc(100% - 12px) 55%;
+      background-size: 5px 5px, 5px 5px;
+      background-repeat: no-repeat;
+      padding-right: 30px;
+    }
+    input[disabled] { opacity: 0.45; cursor: not-allowed; }
+
+    .ligne-flex { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+    .ligne-flex .titre { font-weight: 600; font-size: 12.5px; }
+
+    /* Interrupteur */
+    .switch { position: relative; flex: none; width: 40px; height: 22px; }
+    .switch input { position: absolute; opacity: 0; width: 100%; height: 100%; margin: 0; cursor: pointer; z-index: 2; }
+    .switch span {
+      position: absolute; inset: 0;
+      background: rgba(0, 0, 0, 0.5);
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      border-radius: 999px;
+      transition: background 0.2s, border-color 0.2s;
+    }
+    .switch span::after {
+      content: "";
+      position: absolute; top: 2px; left: 2px;
+      width: 16px; height: 16px;
+      border-radius: 50%;
+      background: var(--muted);
+      transition: transform 0.2s, background 0.2s;
+    }
+    .switch input:checked + span { background: rgba(255, 255, 255, 0.22); border-color: #fff; }
+    .switch input:checked + span::after { transform: translateX(18px); background: #fff; }
+
+    .ajout { display: flex; gap: 7px; }
+    .ajout input { flex: 1; }
+    .ajout button, .btn-enregistrer, .btn-relacher {
+      border: none;
+      border-radius: 8px;
+      font: inherit;
+      font-weight: 700;
+      cursor: pointer;
+      transition: filter 0.15s, transform 0.05s;
+    }
+    .ajout button {
+      flex: none;
+      padding: 0 14px;
+      color: #0a0a0b;
+      background: var(--accent);
+    }
+    .ajout button:hover, .btn-enregistrer:hover { filter: brightness(0.9); }
+    .ajout button:active, .btn-enregistrer:active, .btn-relacher:active { transform: translateY(1px); }
+
+    .puces { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 9px; }
+    .puce {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 4px 5px 4px 10px;
+      font-size: 12px;
+      background: rgba(0, 0, 0, 0.45);
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      border-radius: 999px;
+    }
+    .puce.plain { padding: 5px 11px; }
+    .puce button {
+      width: 17px; height: 17px;
+      display: grid; place-items: center;
+      padding: 0;
+      font-size: 12px; line-height: 1;
+      color: var(--muted);
+      background: rgba(255, 255, 255, 0.1);
+      border: none;
+      border-radius: 50%;
+      cursor: pointer;
+      transition: background 0.15s, color 0.15s;
+    }
+    .puce button:hover { color: #0a0a0b; background: #fff; }
+    .vide { margin-top: 9px; font-size: 11.5px; color: var(--muted); font-style: italic; }
+
+    .btn-relacher {
+      width: 100%;
+      margin-top: 10px;
+      padding: 9px;
+      font-size: 12.5px;
+      color: var(--text);
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.22);
+    }
+    .btn-relacher:hover { background: rgba(255, 255, 255, 0.14); }
+
+    .btn-enregistrer {
+      position: relative;
+      z-index: 1;
+      width: 100%;
+      padding: 11px;
+      color: #0a0a0b;
+      background: var(--accent);
+      font-size: 13px;
+      letter-spacing: 0.03em;
+    }
+    .statut { position: relative; z-index: 1; min-height: 17px; margin: 7px 0 0; font-size: 11.5px; text-align: center; color: var(--muted); }
+    .statut.ok { color: #7ee0a2; }
+    .statut.erreur { color: var(--danger); }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="logo"><img src="https://raw.githubusercontent.com/PapillonApp/Papicons/master/icons/sparkles.svg" alt=""></div>
+    <div>
+      <h1>TimeOut</h1>
+      <p class="sous-titre">Digital grime that pulls you back on track</p>
+    </div>
+  </header>
+
+  <div class="carte">
+    <h2>Trigger</h2>
+
+    <div class="champ">
+      <label for="duration">Time before grime
+        <span class="aide">(seconds, min 120)</span>
+      </label>
+      <input type="number" id="duration" min="120" max="7200" step="1">
+    </div>
+
+    <div class="champ">
+      <label for="blockSeconds">Time out duration
+        <span class="aide">(seconds)</span>
+      </label>
+      <input type="number" id="blockSeconds" min="10" max="3600" step="10">
+    </div>
+
+    <div class="champ">
+      <div class="ligne-flex">
+        <span class="titre">Retype a phrase</span>
+        <label class="switch">
+          <input type="checkbox" id="retypePhrase">
+          <span></span>
+        </label>
+      </div>
+      <p class="aide" style="margin:6px 0 0">
+        Optional: retype the cleanup phrase first — the time out countdown
+        only starts once it is validated.
+      </p>
+    </div>
+  </div>
+
+  <div class="carte">
+    <h2>Blocked Sites</h2>
+    <div class="champ">
+      <div class="ajout">
+        <input type="text" id="new-site" placeholder="example.com" autocomplete="off">
+        <button id="add-site" type="button">Add</button>
+      </div>
+      <div class="puces" id="sites-list"></div>
+      <p class="vide" id="sites-vide" hidden>No blocked sites yet.</p>
+    </div>
+  </div>
+
+  <div class="carte">
+    <h2>Active Blocks</h2>
+    <p class="aide" style="margin:0">
+      Once a site is blocked, any reload or new tab is sealed immediately —
+      even after reloading the extension or restarting the browser.
+    </p>
+    <div class="puces" id="frappes-list"></div>
+    <p class="vide" id="frappes-vide" hidden>No blocked sites yet.</p>
+    <button class="btn-relacher" id="reset-frappes" type="button">Reset all blocks</button>
+  </div>
+
+  <button class="btn-enregistrer" id="save" type="button">Save</button>
+  <p class="statut" id="statut" role="status"></p>
+
+  <script src="popup.js"></script>
+</body>
+</html>

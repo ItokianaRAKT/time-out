@@ -21,6 +21,9 @@ A Chrome extension (Manifest V3) that pulls you back on track: on blacklisted si
 
 - **Time out — always required**: a countdown of `blockSeconds` during which the screen stays locked.
 - **Retype a phrase — optional** (checkbox in the popup, on by default): shown **first**. Once the phrase is retyped correctly, the input disappears and the classic countdown takes its place — and **only then does the countdown start** (without the option, the countdown starts at seal). The screen unlocks when the countdown elapses.
+- **40 phrases, picked at random** on every challenge (`phrases.js`): humor & self-derision, soft guilt, mindfulness, direct action, irony, urgency, psychology, discipline.
+- **Live word highlighting**: words already typed stay bright, words not yet reached are dimmed, and a mismatching word is **highlighted in gray** (the input border flags the error too). Case, accents, spaces and punctuation are ignored — but the text must be complete.
+- **Copy-paste is disabled** in the grime window (paste, cut, copy and the context menu are all blocked).
 - **Automatic restart**: once the challenge is solved, the *Time before grime* grace period starts again **on the same tab, with no reload** — while the strike keeps forcing an immediate re-seal on reload or new tab.
 
 ### Block persistence
@@ -68,6 +71,7 @@ Files:
 - `manifest.json` — MV3, permissions `storage` + `tabs`.
 - `background.js` — per-tab scheduling, blacklist, strikes.
 - `styles.js` — effect CSS (applied inside Shadow DOM via `adoptedStyleSheets`, immune to site CSP).
+- `phrases.js` — the 40 challenge phrases (random pick).
 - `content.js` — overlay, sealing, challenge.
 - `popup.html` / `popup.js` — settings UI.
 

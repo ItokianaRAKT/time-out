@@ -1,5 +1,9 @@
-const PHRASE_NETTOYAGE =
-  "Je ferme cet onglet inutile et je me remets au travail tout de suite";
+// Liste des phrases du défi (phrases.js, chargé avant ce script).
+// Repli au cas où phrases.js ne serait pas chargé.
+const LISTE_PHRASES =
+  typeof PHRASES !== "undefined" && Array.isArray(PHRASES) && PHRASES.length
+    ? PHRASES
+    : ["Je ferme cet onglet inutile et je me remets au travail tout de suite"];
 
 const DUREE_GRIMPE = 12;      // secondes, durée de la rampe normale
 const DUREE_GRIMPE_RAPIDE = 0.4; // secondes, rampe rapide pour domaine frappé
@@ -57,6 +61,7 @@ const TYPES_EVENEMENTS = [
   "gesturestart", "gesturechange", "gestureend",
   "keydown", "keyup", "keypress",
   "beforeinput", "input", "change",
+  "paste", "copy", "cut",
   "dragstart", "drag", "dragend", "drop",
   "scroll", "scrollend", "resize",
   "focus", "blur", "focusin", "focusout"
@@ -289,11 +294,17 @@ function surSortieInterne(e) {
   const dansUnChamp =
     cible instanceof Element && cible.matches("input, textarea, [contenteditable]");
 
-  // Menu contextuel autorisé uniquement dans le champ (collage).
-  if (e.type === "contextmenu" && !dansUnChamp) e.preventDefault();
+  // Copier-coller totalement désactivé dans la fenêtre de crasse.
+  if (e.type === "paste" || e.type === "copy" || e.type === "cut" || e.type === "drop") {
+    e.preventDefault();
+  }
+  // Menu contextuel désactivé (il proposerait coller/copier).
+  if (e.type === "contextmenu") e.preventDefault();
   // Toutes les touches sauf la saisie dans le champ (Tab compris) sont
   // neutralisées.
   if (e.type === "keydown" && (!dansUnChamp || e.key === "Tab")) e.preventDefault();
+  // Un glisser-déposer de texte ne doit pas remplir le champ.
+  if (e.type === "beforeinput" && e.inputType === "insertFromPaste") e.preventDefault();
 
   // Les écouteurs du site (sur document/window) ne capteront rien :
   // ni la frappe, ni les clics, ni les événements du voile.
@@ -349,6 +360,9 @@ let phraseRecopiee = false;
 let compteMinuteur = null;
 let minuteurRestant = 0;
 let conteneurDefi = null;
+let phraseCiblee = "";     // phrase tirée au hasard pour ce défi
+let elementPhrase = null;  // <blockquote> affiché (mot à mot)
+let champPhrase = null;    // <input> de saisie
 
 function construireDefi(conteneur, reglages) {
   phraseExigee = reglages.retypePhrase !== false;
@@ -380,6 +394,9 @@ function tenterLiberation() {
 }
 
 function construireDefiSaisie(conteneur) {
+  // Phrase tirée au hasard parmi les 40 (phrases.js).
+  phraseCiblee = LISTE_PHRASES[Math.floor(Math.random() * LISTE_PHRASES.length)];
+
   const bloc = document.createElement("div");
   bloc.className = "crasse-phrase-bloc";
 
@@ -389,7 +406,7 @@ function construireDefiSaisie(conteneur) {
 
   const phrase = document.createElement("blockquote");
   phrase.className = "crasse-phrase";
-  phrase.textContent = `« ${PHRASE_NETTOYAGE} »`;
+  elementPhrase = phrase;
 
   const champ = document.createElement("input");
   champ.type = "text";
@@ -398,20 +415,67 @@ function construireDefiSaisie(conteneur) {
   champ.spellcheck = false;
   champ.placeholder = "Tapez la phrase ici…";
   champ.setAttribute("aria-label", "Phrase à recopier");
+  champPhrase = champ;
 
   const aide = document.createElement("p");
   aide.className = "crasse-aide";
   aide.textContent =
-    "Casse, espaces superflus et accents sont ignorés, mais le texte doit être complet. Le compte à rebours démarrera ensuite.";
+    "Casse, accents, espaces et ponctuation ignorés : le texte doit être complet. Les mots faux sont surlignés en gris et le copier-coller est bloqué. Le compte à rebours démarrera ensuite.";
 
   bloc.append(introPhrase, phrase, champ, aide);
   conteneur.appendChild(bloc);
 
   champ.addEventListener("input", () => {
-    if (normaliser(champ.value) !== normaliser(PHRASE_NETTOYAGE)) return;
+    dessinerPhrase();
+    if (normaliser(champ.value) !== normaliser(phraseCiblee)) return;
     phraseRecopiee = true;
     validerPhrase();
   });
+
+  dessinerPhrase();
+}
+
+/* Affiche la phrase mot à mot :
+   - mot déjà tapé (ou simple préfixe en cours de frappe) : blanc normal,
+   - mot pas encore atteint : gris très discret,
+   - mot fautif : surligné sur fond gris clair.
+   Le champ de saisie passe en style "erreur" tant qu'un mot diffère. */
+function dessinerPhrase() {
+  if (!elementPhrase) return;
+
+  const valeur = (champPhrase ? champPhrase.value : "").trim();
+  const saisies = valeur ? valeur.replace(/\s+/g, " ").split(/\s+/) : [];
+  const cibles = phraseCiblee.split(/\s+/);
+
+  elementPhrase.textContent = "";
+  elementPhrase.appendChild(document.createTextNode("« "));
+
+  let faux = false;
+  cibles.forEach((mot, i) => {
+    const span = document.createElement("span");
+    span.className = "mot";
+
+    if (i >= saisies.length) {
+      span.classList.add("mot-attente");
+    } else if (normaliser(mot).startsWith(normaliser(saisies[i]))) {
+      span.classList.add("mot-ok");
+    } else {
+      span.classList.add("mot-faux");
+      faux = true;
+    }
+
+    span.textContent = mot;
+    elementPhrase.appendChild(span);
+    if (i < cibles.length - 1) elementPhrase.appendChild(document.createTextNode(" "));
+  });
+
+  elementPhrase.appendChild(document.createTextNode(" »"));
+
+  if (champPhrase) {
+    // Un mot de trop compte aussi comme une différence.
+    const enTrop = saisies.length > cibles.length;
+    champPhrase.classList.toggle("is-erreur", faux || enTrop);
+  }
 }
 
 // Phrase validée : le champ disparaît, le compte à rebours classique
@@ -421,6 +485,8 @@ function validerPhrase() {
 
   const bloc = conteneurDefi.querySelector(".crasse-phrase-bloc");
   if (bloc) bloc.remove();
+  elementPhrase = null;
+  champPhrase = null;
 
   const titre = conteneurDefi.querySelector("h2");
   if (titre) titre.textContent = "Temps mort forcé";
@@ -439,12 +505,12 @@ function validerPhrase() {
 
 function normaliser(texte) {
   return String(texte)
-    .trim()
-    .replace(/\s+/g, " ")
-    .replace(/[’']/g, "'")
     .toLowerCase()
     .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "");
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[.,!?;:«»"'’]/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
 }
 
 /* ------------------------------------------------------------------
@@ -528,6 +594,9 @@ function liberer() {
   phraseRecopiee = false;
   compteMinuteur = null;
   conteneurDefi = null;
+  phraseCiblee = "";
+  elementPhrase = null;
+  champPhrase = null;
 
   if (minuteurScellement) {
     clearTimeout(minuteurScellement);

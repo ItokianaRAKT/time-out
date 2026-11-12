@@ -269,6 +269,29 @@ const CSS_CRASSE = `
   box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.16);
 }
 
+/* --- Saisie de la phrase : les mots sont comparés en direct -------- */
+.crasse-phrase .mot {
+  border-radius: 3px;
+  transition: color 0.15s ease, background-color 0.15s ease;
+}
+.crasse-phrase .mot-ok {
+  color: #f5f5f7;
+}
+.crasse-phrase .mot-attente {
+  color: rgba(245, 245, 247, 0.52);
+}
+.crasse-phrase .mot-faux {
+  background: rgba(255, 255, 255, 0.32);
+  color: #ffffff;
+}
+
+/* Au moins un mot diffère de la phrase d'origine. */
+.crasse-champ.is-erreur,
+.crasse-champ.is-erreur:focus {
+  border-color: rgba(255, 255, 255, 0.85);
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.22);
+}
+
 .crasse-aide {
   position: relative;
   margin-top: 12px !important;

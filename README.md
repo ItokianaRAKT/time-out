@@ -21,6 +21,7 @@ A Chrome extension (Manifest V3) that pulls you back on track: on blacklisted si
 
 - **Time out — always required**: a countdown of `blockSeconds` during which the screen stays locked.
 - **Retype a phrase — optional** (checkbox in the popup, on by default): shown **first**. Once the phrase is retyped correctly, the input disappears and the classic countdown takes its place — and **only then does the countdown start** (without the option, the countdown starts at seal). The screen unlocks when the countdown elapses.
+- **Automatic restart**: once the challenge is solved, the *Time before grime* grace period starts again **on the same tab, with no reload** — while the strike keeps forcing an immediate re-seal on reload or new tab.
 
 ### Block persistence
 

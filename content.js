@@ -559,4 +559,11 @@ function liberer() {
   panneau = null;
   boutonPleinEcran = null;
   bloquee = false;
+
+  // "Time before grime" repart sur ce même site, sans rechargement :
+  // le service worker re-planifie une période de grâce complète pour
+  // cet onglet (la frappe du domaine est conservée, mais ignorée ici).
+  chrome.runtime
+    .sendMessage({ action: "replanifierApresDefi" })
+    .catch(() => {});
 }

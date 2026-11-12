@@ -102,7 +102,12 @@ function delaiApresReglages(reglages) {
 }
 
 // (Re)planifie le déclenchement pour un onglet donné.
-async function planifierOnglet(tabId, url) {
+// `ignorerFrappe` : programme une période de grâce complète même si le
+// domaine est "frappé" (utilisé après résolution du défi : le temps mort
+// écoulé fait repartir "Time before grime" sur le même onglet, sans
+// rechargement — la frappe, elle, reste pour les rechargements et les
+// nouveaux onglets).
+async function planifierOnglet(tabId, url, ignorerFrappe = false) {
   if (!tabId || !url || !/^https?:/i.test(url)) {
     annulerMinuteur(tabId);
     return;
@@ -113,7 +118,8 @@ async function planifierOnglet(tabId, url) {
   if (!estToxique(url, reglages.blacklist)) return;
 
   const hote = hoteDe(url);
-  const dejaFrappe = Object.prototype.hasOwnProperty.call(frappes, hote);
+  const dejaFrappe =
+    !ignorerFrappe && Object.prototype.hasOwnProperty.call(frappes, hote);
   const delai = dejaFrappe ? DELAI_FRAPPE_MS : delaiApresReglages(reglages);
 
   timers[tabId] = setTimeout(() => {
@@ -187,6 +193,12 @@ chrome.runtime.onMessage.addListener((message, sender) => {
         return enregistrerFrappes(frappes);
       })
       .catch(() => {});
+  }
+
+  // Défi résolu : "Time before grime" repart sur ce même onglet, sans
+  // rechargement — une grâce complète, même si le domaine est frappé.
+  if (message.action === "replanifierApresDefi") {
+    planifierOnglet(sender.tab.id, sender.tab.url, true).catch(() => {});
   }
 });
 
